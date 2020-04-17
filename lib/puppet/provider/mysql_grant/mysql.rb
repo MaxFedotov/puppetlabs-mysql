@@ -78,7 +78,8 @@ Puppet::Type.type(:mysql_grant).provide(:mysql, parent: Puppet::Provider::Mysql)
     user_string = self.class.cmd_user(user)
     priv_string = self.class.cmd_privs(privileges)
     table_string = privileges.include?('PROXY') ? self.class.cmd_user(table) : self.class.cmd_table(table)
-    query = "GRANT #{priv_string}"
+    query = "set session sql_log_bin=0;"
+    query << "GRANT #{priv_string}"
     query << " ON #{table_string}"
     query << " TO #{user_string}"
     query << self.class.cmd_options(options) unless options.nil?
@@ -107,10 +108,10 @@ Puppet::Type.type(:mysql_grant).provide(:mysql, parent: Puppet::Provider::Mysql)
     # It hast to be executed before "REVOKE ALL [..]" since a GRANT has to
     # exist to be executed successfully
     if revoke_privileges.include?('ALL') && !revoke_privileges.include?('PROXY')
-      query = "REVOKE GRANT OPTION ON #{table_string} FROM #{user_string}"
+      query = "set session sql_log_bin=0; REVOKE GRANT OPTION ON #{table_string} FROM #{user_string}"
       self.class.mysql_caller(query, 'system')
     end
-    query = "REVOKE #{priv_string} ON #{table_string} FROM #{user_string}"
+    query = "set session sql_log_bin=0; REVOKE #{priv_string} ON #{table_string} FROM #{user_string}"
     self.class.mysql_caller(query, 'system')
   end
 
@@ -135,7 +136,7 @@ Puppet::Type.type(:mysql_grant).provide(:mysql, parent: Puppet::Provider::Mysql)
 
   def flush
     @property_hash.clear
-    self.class.mysql_caller('FLUSH PRIVILEGES', 'regular')
+    self.class.mysql_caller('set session sql_log_bin=0; FLUSH PRIVILEGES', 'regular')
   end
 
   mk_resource_methods

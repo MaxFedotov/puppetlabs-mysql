@@ -28,7 +28,7 @@ Puppet::Type.type(:mysql_plugin).provide(:mysql, parent: Puppet::Provider::Mysql
     # Use plugin_name.so as soname if it's not specified. This won't work on windows as
     # there it should be plugin_name.dll
     @resource[:soname].nil? ? (soname = @resource[:name] + '.so') : (soname = @resource[:soname])
-    self.class.mysql_caller("install plugin #{@resource[:name]} soname '#{soname}'", 'regular')
+    self.class.mysql_caller("set session sql_log_bin=0; install plugin #{@resource[:name]} soname '#{soname}'", 'regular')
 
     @property_hash[:ensure] = :present
     @property_hash[:soname] = @resource[:soname]
@@ -37,7 +37,7 @@ Puppet::Type.type(:mysql_plugin).provide(:mysql, parent: Puppet::Provider::Mysql
   end
 
   def destroy
-    self.class.mysql_caller("uninstall plugin #{@resource[:name]}", 'regular')
+    self.class.mysql_caller("set session sql_log_bin=0; uninstall plugin #{@resource[:name]}", 'regular')
 
     @property_hash.clear
     exists? ? (return false) : (return true)
